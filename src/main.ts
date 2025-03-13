@@ -1,6 +1,21 @@
+// main.ts
 import { bootstrapApplication } from '@angular/platform-browser';
-import { appConfig } from './app/app.config';
-import { AppComponent } from './app/app.component';
+import { importProvidersFrom } from '@angular/core';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { OAuthModule } from 'angular-oauth2-oidc';
 
-bootstrapApplication(AppComponent, appConfig)
-  .catch((err) => console.error(err));
+import { AppComponent } from './app/app.component';
+import { AuthInterceptor } from './auth/auth.interceptor';
+
+bootstrapApplication(AppComponent, {
+  providers: [
+    // Importiere Module als Provider
+    importProvidersFrom(HttpClientModule, OAuthModule.forRoot()),
+    // Registriere den HTTP-Interceptor
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true,
+    },
+  ],
+});
