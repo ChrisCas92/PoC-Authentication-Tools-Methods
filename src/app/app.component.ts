@@ -1,58 +1,95 @@
-// app.component.ts
+import { NgIf } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { OAuthService, AuthConfig } from 'angular-oauth2-oidc';
+import { OAuthService } from 'angular-oauth2-oidc';
+import { authConfig } from '../auth/auth.config';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-root',
-  template: `
-    <div *ngIf="!loggedIn">
-      <button (click)="login()">Login</button>
-    </div>
-    <div *ngIf="loggedIn">
-      <h1>Willkommen, {{ userName }}</h1>
-      <button (click)="logout()">Logout</button>
-    </div>
-  `
+  standalone: true,
+  imports: [NgIf],
+  templateUrl: './app.component.html'
 })
 export class AppComponent implements OnInit {
   loggedIn = false;
-  userName = '';
 
-  authConfig: AuthConfig = {
-    issuer: 'http://localhost:8080/realms/POCRealm',
-    clientId: 'angular-client',  // Entspricht der in Keycloak konfigurierten Client-ID
-    redirectUri: window.location.origin,
-    responseType: 'code', // Authorization Code Flow (mit PKCE)
-    scope: 'openid profile email',
-    showDebugInformation: true,
-    useSilentRefresh: true,
-    silentRefreshRedirectUri: window.location.origin + '/silent-refresh.html'
-  };
-
-  constructor(private oauthService: OAuthService) {}
-
-  ngOnInit(): void {
-    // Konfiguration des OAuthService
-    this.oauthService.configure(this.authConfig);
-    this.oauthService.setupAutomaticSilentRefresh();
-
-    // Laden des Discovery-Dokuments und Versuch des Logins
-    this.oauthService.loadDiscoveryDocumentAndTryLogin().then(loggedIn => {
-      this.loggedIn = loggedIn;
-      if (loggedIn) {
-        const claims = this.oauthService.getIdentityClaims();
-        this.userName = claims ? claims['preferred_username'] : 'unbekannt';
-      }
-    });
+ // Inject HttpClient in constructor
+constructor(private oauthService: OAuthService, private http: HttpClient) {
+    // Configure and initialize OAuth
+    this.configureOAuth();
   }
 
-  // Startet den Login-Flow
+  async configureOAuth() {
+    // Configure the OAuth service
+    this.oauthService.configure(authConfig);
+
+    try {
+      // Load discovery document
+      await this.oauthService.loadDiscoveryDocumentAndTryLogin();
+
+      // Check if the user is logged in
+      this.loggedIn = this.oauthService.hasValidAccessToken();
+
+      console.log('OAuth configured successfully');
+      console.log('Logged in status:', this.loggedIn);
+    } catch (error) {
+      console.error('OAuth configuration error:', error);
+    }
+  }
+
+  ngOnInit(): void {
+    // Already handled in constructor
+  }
+
   login(): void {
+    console.log('Starting login flow');
     this.oauthService.initLoginFlow();
   }
 
-  // Führt den Logout durch
   logout(): void {
+    console.log('Logging out');
     this.oauthService.logOut();
+  }
+
+  testPublicEndpoint() {
+    this.http.get('http://localhost:9080/api/public')
+      .subscribe(
+        response => {
+          console.log('Public endpoint response:', response);
+          alert('Public endpoint access successful: ' + JSON.stringify(response));
+        },
+        error => {
+          console.error('Error accessing public endpoint:', error);
+          alert('Error accessing public endpoint: ' + error.message);
+        }
+      );
+  }
+
+  testSecuredEndpoint() {
+    this.http.get('http://localhost:9080/api/secured')
+      .subscribe(
+        response => {
+          console.log('Secured endpoint response:', response);
+          alert('Secured endpoint access successful: ' + JSON.stringify(response));
+        },
+        error => {
+          console.error('Error accessing secured endpoint:', error);
+          alert('Error accessing secured endpoint: ' + error.message);
+        }
+      );
+  }
+
+  testAdminEndpoint() {
+    this.http.get('http://localhost:9080/api/admin')
+      .subscribe(
+        response => {
+          console.log('Admin endpoint response:', response);
+          alert('Admin endpoint access successful: ' + JSON.stringify(response));
+        },
+        error => {
+          console.error('Error accessing admin endpoint:', error);
+          alert('Error accessing admin endpoint: ' + error.message);
+        }
+      );
   }
 }

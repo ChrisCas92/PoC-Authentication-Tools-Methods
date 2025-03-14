@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    command: start-dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+    networks:
+      - poc-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: angular-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - keycloak
+    networks:
+      - poc-network
+
+  jee-backend:
+    build: C:\Chris\Git\PoC authentication variations\jeebackend\jeebackend
+    container_name: jee-backend
+    ports:
+      - "9080:9080"
+    depends_on:
+      - keycloak
+    environment:
+      - MP_JWT_VERIFY_PUBLICKEY_LOCATION=http://keycloak:8080/realms/PoCRealm%20Oauth2OpenIdConnect/protocol/openid-connect/certs
+      - MP_JWT_VERIFY_ISSUER=http://keycloak:8080/realms/PoCRealm%20Oauth2OpenIdConnect
+      - MP_JWT_VERIFY_AUDIENCES=angular-client
+    networks:
+      - poc-network
+
+networks:
+  poc-network:
+    driver: bridge
+
+volumes:
+  keycloak_data:
+    driver: local

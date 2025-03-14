@@ -1,22 +1,22 @@
 // auth.interceptor.ts
-import { Injectable } from '@angular/core';
-import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent } from '@angular/common/http';
+import { HttpInterceptorFn, HttpRequest, HttpHandlerFn } from '@angular/common/http';
+import { inject } from '@angular/core';
 import { OAuthService } from 'angular-oauth2-oidc';
-import { Observable } from 'rxjs';
 
-@Injectable()
-export class AuthInterceptor implements HttpInterceptor {
-  constructor(private oauthService: OAuthService) {}
+export const authInterceptor: HttpInterceptorFn = (
+  req: HttpRequest<unknown>,
+  next: HttpHandlerFn
+) => {
+  const oauthService = inject(OAuthService);
+  const token = oauthService.getAccessToken();
 
-  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    const token = this.oauthService.getAccessToken();
-    if (token) {
-      // Fügt den Authorization Header hinzu
-      const authReq = req.clone({
-        setHeaders: { Authorization: 'Bearer ' + token }
-      });
-      return next.handle(authReq);
-    }
-    return next.handle(req);
+  if (token) {
+    // Add the Authorization header with Bearer token
+    const authReq = req.clone({
+      setHeaders: { Authorization: `Bearer ${token}` }
+    });
+    return next(authReq);
   }
-}
+
+  return next(req);
+};
