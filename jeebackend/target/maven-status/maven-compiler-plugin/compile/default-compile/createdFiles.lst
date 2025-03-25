@@ -1,0 +1,4 @@
+com\example\RolesAllowed.class
+com\example\SecuredResource.class
+com\example\JaxRsApplication.class
+com\example\CORSFilter.class
