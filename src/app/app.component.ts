@@ -52,44 +52,44 @@ constructor(private oauthService: OAuthService, private http: HttpClient) {
   }
 
   testPublicEndpoint() {
-    this.http.get('http://localhost:9080/api/public')
-      .subscribe(
-        response => {
+    this.http.get('/api/public')
+      .subscribe({
+        next: (response) => {
           console.log('Public endpoint response:', response);
           alert('Public endpoint access successful: ' + JSON.stringify(response));
         },
-        error => {
+        error: (error) => {
           console.error('Error accessing public endpoint:', error);
           alert('Error accessing public endpoint: ' + error.message);
         }
-      );
+  });
   }
 
   testSecuredEndpoint() {
-    this.http.get('http://localhost:9080/api/secured')
-      .subscribe(
-        response => {
-          console.log('Secured endpoint response:', response);
-          alert('Secured endpoint access successful: ' + JSON.stringify(response));
-        },
-        error => {
-          console.error('Error accessing secured endpoint:', error);
-          alert('Error accessing secured endpoint: ' + error.message);
-        }
-      );
+    this.http.get('/api/secured')
+      .subscribe({
+      next: (response) => {
+        console.log('Secured endpoint response:', response);
+        alert('Secured endpoint access successful: ' + JSON.stringify(response));
+      },
+      error: (error) => {
+        console.error('Error accessing secured endpoint:', error);
+        alert('Error accessing secured endpoint: ' + error.message);
+      }
+      });
   }
 
   testAdminEndpoint() {
-    this.http.get('http://localhost:9080/api/admin')
-      .subscribe(
-        response => {
+    this.http.get('/api/admin')
+      .subscribe({
+        next: (response) => {
           console.log('Admin endpoint response:', response);
           alert('Admin endpoint access successful: ' + JSON.stringify(response));
         },
-        error => {
+        error: (error) => {
           console.error('Error accessing admin endpoint:', error);
           alert('Error accessing admin endpoint: ' + error.message);
         }
-      );
+      });
   }
 }
