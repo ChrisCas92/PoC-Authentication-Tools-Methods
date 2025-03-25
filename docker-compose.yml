@@ -26,7 +26,9 @@ services:
       - poc-network
 
   jee-backend:
-    build: C:\Chris\Git\PoC authentication variations\jeebackend\jeebackend
+    build:
+      context: ./jeebackend
+      dockerfile: Dockerfile.backend
     container_name: jee-backend
     ports:
       - "9080:9080"

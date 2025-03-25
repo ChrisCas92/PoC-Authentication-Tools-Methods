@@ -103,8 +103,6 @@ Für eine effizientere Entwicklung können Sie eine separate Docker-Compose-Konf
 1. Erstellen Sie eine `docker-compose.dev.yml` Datei:
 
 ```yaml
-version: "3.8"
-
 services:
   # ... andere Services (keycloak, backend, etc.) ...
 
@@ -140,7 +138,7 @@ Ersetzen Sie Ihr aktuelles Frontend-Dockerfile durch dieses mehrstufige Dockerfi
 
 ```dockerfile
 # Build-Phase
-FROM node:16-alpine AS build
+FROM node:20-alpine AS build
 WORKDIR /app
 
 # Kopiere package.json und installiere Abhängigkeiten
