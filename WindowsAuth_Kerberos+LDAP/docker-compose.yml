@@ -1,0 +1,41 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: windows-auth-backend
+    ports:
+      - "8080:8080"
+      - "9990:9990" # Admin console port
+    environment:
+      - KRB5_CONFIG=/etc/krb5.conf
+      # LDAP and Kerberos configuration
+      - LDAP_URL=ldap://your-ldap-server:389
+      - LDAP_BASE_DN=DC=example,DC=com
+      - LDAP_BIND_DN=CN=ServiceAccount,CN=Users,DC=example,DC=com
+      - LDAP_PASSWORD=serviceAccountPassword
+      - JAVA_OPTS=-Djava.security.krb5.conf=/etc/krb5.conf -Djava.security.auth.login.config=/opt/jboss/wildfly/standalone/configuration/auth/jaas.conf -Djavax.security.auth.useSubjectCredsOnly=false
+    volumes:
+      # Mount keytab file (this must exist on your host machine)
+      - ./keytabs:/opt/jboss/wildfly/standalone/configuration/auth
+      # Mount Kerberos configuration
+      - ./src/main/resources/krb5.conf:/etc/krb5.conf
+    networks:
+      - auth-network
+
+  # If you want to include your Angular frontend as well
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+    container_name: windows-auth-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - auth-network
+
+networks:
+  auth-network:
+    driver: bridge

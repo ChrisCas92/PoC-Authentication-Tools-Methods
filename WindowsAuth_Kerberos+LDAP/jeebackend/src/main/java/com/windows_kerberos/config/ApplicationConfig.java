@@ -5,5 +5,5 @@ import javax.ws.rs.core.Application;
 
 @ApplicationPath("/api")
 public class ApplicationConfig extends Application {
-  // resources will be automatically discovered
+  // The resources will be automatically discovered
 }

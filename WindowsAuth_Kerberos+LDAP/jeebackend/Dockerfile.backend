@@ -1,0 +1,34 @@
+# Backend Dockerfile
+FROM jboss/wildfly:latest
+
+# Install required packages for Kerberos
+USER root
+RUN microdnf install -y krb5-workstation krb5-libs
+
+# Create directories for configuration files
+RUN mkdir -p /opt/jboss/wildfly/standalone/configuration/auth
+
+# Switch back to jboss user
+USER jboss
+
+# Copy Kerberos and JAAS configuration files
+COPY src/main/resources/krb5.conf /etc/krb5.conf
+COPY src/main/resources/jaas.conf /opt/jboss/wildfly/standalone/configuration/auth/jaas.conf
+
+# Add JBoss CLI commands to configure security domains
+COPY src/main/resources/configure-security.cli /opt/jboss/
+
+# Run the CLI commands to configure the server
+RUN /opt/jboss/wildfly/bin/jboss-cli.sh --file=/opt/jboss/configure-security.cli
+
+# Set JVM options for Kerberos
+ENV JAVA_OPTS="-Djava.security.krb5.conf=/etc/krb5.conf \
+                -Djava.security.auth.login.config=/opt/jboss/wildfly/standalone/configuration/auth/jaas.conf \
+                -Djavax.security.auth.useSubjectCredsOnly=false \
+                -Dsun.security.krb5.debug=true"
+
+# Copy the WAR file
+COPY target/windows-auth-poc.war /opt/jboss/wildfly/standalone/deployments/
+
+# Expose the necessary ports
+EXPOSE 8080

@@ -1,0 +1,69 @@
+<!-- src/main/webapp/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Windows Auth POC - Backend</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .status {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+
+    .endpoints {
+      margin-top: 20px;
+    }
+
+    .endpoint {
+      background-color: #eef;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Windows Authentication POC - Backend</h1>
+  <p>This is the JEE backend server for the Windows Authentication proof of concept.</p>
+
+  <div class="status">
+    <h2>Server Status</h2>
+    <p>The backend server is up and running.</p>
+  </div>
+
+  <div class="endpoints">
+    <h2>Available Endpoints</h2>
+
+    <div class="endpoint">
+      <h3>Authentication Status</h3>
+      <p>URL: <code>/api/auth/status</code></p>
+      <p>Method: <code>GET</code></p>
+      <p>Description: Check if the current user is authenticated</p>
+    </div>
+
+    <div class="endpoint">
+      <h3>User Details</h3>
+      <p>URL: <code>/api/auth/user</code></p>
+      <p>Method: <code>GET</code></p>
+      <p>Description: Get details about the authenticated user</p>
+    </div>
+  </div>
+</body>
+
+</html>

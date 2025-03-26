@@ -1,4 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
+﻿<project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.windows_kerberos.auth</groupId>
@@ -20,41 +20,60 @@
     <dependency>
       <groupId>javax</groupId>
       <artifactId>javaee-api</artifactId>
-      <version>8.0</version>
+      <version>8.0.1</version>
       <scope>provided</scope>
     </dependency>
 
     <!-- For JNDI/LDAP -->
     <dependency>
+      <groupId>javax.cache</groupId>
+      <artifactId>cache-api</artifactId>
+      <version>1.1.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.ehcache</groupId>
+      <artifactId>ehcache</artifactId>
+      <version>3.9.6</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.directory.api</groupId>
       <artifactId>api-all</artifactId>
-      <version>2.1.2</version>
-    </dependency>
-
-    <!-- For Kerberos/SPNEGO -->
-    <dependency>
-      <groupId>org.ietf.jgss</groupId>
-      <artifactId>jgss</artifactId>
-      <version>3.0.0</version>
+      <version>2.1.7</version>
     </dependency>
 
     <!-- For JSON processing -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.13.0</version>
+      <version>2.18.3</version>
+    </dependency>
+
+    <!-- For MicroProfile Config -->
+    <dependency>
+      <groupId>org.eclipse.microprofile.config</groupId>
+      <artifactId>microprofile-config-api</artifactId>
+      <version>2.0</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- For MicroProfile Health -->
+    <dependency>
+      <groupId>org.eclipse.microprofile.health</groupId>
+      <artifactId>microprofile-health-api</artifactId>
+      <version>3.0</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- For logging -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>1.7.36</version>
+      <version>2.1.0-alpha1</version>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.2.10</version>
+      <version>1.5.18</version>
     </dependency>
 
     <!-- For testing -->
