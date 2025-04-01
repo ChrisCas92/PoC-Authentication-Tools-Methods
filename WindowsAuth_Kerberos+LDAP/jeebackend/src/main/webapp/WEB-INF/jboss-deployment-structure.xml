@@ -1,18 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jboss-deployment-structure>
+<jboss-deployment-structure xmlns="urn:jboss:deployment-structure:1.2">
   <deployment>
     <dependencies>
       <module name="org.apache.commons.pool" />
     </dependencies>
-    <properties>
-      <!-- LDAP connection pool properties -->
-      <property name="com.sun.jndi.ldap.connect.pool.protocol" value="plain ssl" />
-      <property name="com.sun.jndi.ldap.connect.pool.authentication" value="simple" />
-      <property name="com.sun.jndi.ldap.connect.pool.maxsize" value="20" />
-      <property name="com.sun.jndi.ldap.connect.pool.prefsize" value="10" />
-      <property name="com.sun.jndi.ldap.connect.pool.timeout" value="300000" />
-      <property name="com.sun.jndi.ldap.connect.pool.initsize" value="5" />
-      <property name="com.sun.jndi.ldap.connect.pool.debug" value="all" />
-    </properties>
+    <local-last value="true"/>
+    <resources>
+      <resource-root path="." use-physical-code-source="true"/>
+    </resources>
   </deployment>
 </jboss-deployment-structure>

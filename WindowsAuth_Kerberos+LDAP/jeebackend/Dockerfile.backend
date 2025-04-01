@@ -1,34 +1,34 @@
 # Backend Dockerfile
-FROM jboss/wildfly:latest
+FROM eclipse-temurin:11-jdk
 
-# Install required packages for Kerberos
-USER root
-RUN microdnf install -y krb5-workstation krb5-libs
+# Install WildFly and Kerberos
+RUN apt-get update && \
+    apt-get install -y curl tar krb5-user libkrb5-dev && \
+    curl -O https://download.jboss.org/wildfly/23.0.0.Final/wildfly-23.0.0.Final.tar.gz && \
+    tar xf wildfly-23.0.0.Final.tar.gz && \
+    mv wildfly-23.0.0.Final /opt/wildfly && \
+    rm wildfly-23.0.0.Final.tar.gz && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Create directories for configuration files
-RUN mkdir -p /opt/jboss/wildfly/standalone/configuration/auth
-
-# Switch back to jboss user
-USER jboss
+RUN mkdir -p /opt/wildfly/standalone/configuration/auth
 
 # Copy Kerberos and JAAS configuration files
 COPY src/main/resources/krb5.conf /etc/krb5.conf
-COPY src/main/resources/jaas.conf /opt/jboss/wildfly/standalone/configuration/auth/jaas.conf
+COPY src/main/resources/jaas.conf /opt/wildfly/standalone/configuration/auth/jaas.conf
 
-# Add JBoss CLI commands to configure security domains
-COPY src/main/resources/configure-security.cli /opt/jboss/
-
-# Run the CLI commands to configure the server
-RUN /opt/jboss/wildfly/bin/jboss-cli.sh --file=/opt/jboss/configure-security.cli
+# Copy the WAR file
+COPY target/windows-auth-poc.war /opt/wildfly/standalone/deployments/
 
 # Set JVM options for Kerberos
 ENV JAVA_OPTS="-Djava.security.krb5.conf=/etc/krb5.conf \
-                -Djava.security.auth.login.config=/opt/jboss/wildfly/standalone/configuration/auth/jaas.conf \
+                -Djava.security.auth.login.config=/opt/wildfly/standalone/configuration/auth/jaas.conf \
                 -Djavax.security.auth.useSubjectCredsOnly=false \
                 -Dsun.security.krb5.debug=true"
 
-# Copy the WAR file
-COPY target/windows-auth-poc.war /opt/jboss/wildfly/standalone/deployments/
-
 # Expose the necessary ports
-EXPOSE 8080
+EXPOSE 8080 9990
+
+# Start WildFly
+CMD ["/opt/wildfly/bin/standalone.sh", "-b", "0.0.0.0", "-bmanagement", "0.0.0.0"]
