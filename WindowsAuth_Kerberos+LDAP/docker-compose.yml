@@ -1,40 +1,75 @@
 services:
+  # JEE Backend
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ./jeebackend
+      dockerfile: Dockerfile.backend
     container_name: windows-auth-backend
     ports:
       - "8080:8080"
-      - "9990:9990" # Admin console port
+      - "9990:9990" # Admin console
     environment:
-      - KRB5_CONFIG=/etc/krb5.conf
-      # LDAP and Kerberos configuration
-      - LDAP_URL=ldap://your-ldap-server:389
-      - LDAP_BASE_DN=DC=example,DC=com
-      - LDAP_BIND_DN=CN=ServiceAccount,CN=Users,DC=example,DC=com
-      - LDAP_PASSWORD=serviceAccountPassword
-      - JAVA_OPTS=-Djava.security.krb5.conf=/etc/krb5.conf -Djava.security.auth.login.config=/opt/jboss/wildfly/standalone/configuration/auth/jaas.conf -Djavax.security.auth.useSubjectCredsOnly=false
+      # LDAP Configuration
+      - LDAP_URL=ldap://openldap:389
+      - LDAP_BASE_DN=dc=example,dc=com
+      - LDAP_BIND_DN=cn=ServiceAccount,ou=Users,dc=example,dc=com
+      - LDAP_PASSWORD=servicepassword
+      # Test mode for local development
+      - AUTH_TEST_MODE=true
+      - AUTH_TEST_SIMULATED_USER=jdoe
     volumes:
-      # Mount keytab file (this must exist on your host machine)
-      - ./keytabs:/opt/jboss/wildfly/standalone/configuration/auth
-      # Mount Kerberos configuration
-      - ./src/main/resources/krb5.conf:/etc/krb5.conf
+      - ./jeebackend/target:/opt/jboss/wildfly/standalone/deployments
     networks:
       - auth-network
+    depends_on:
+      - openldap
 
-  # If you want to include your Angular frontend as well
+  # Angular Frontend
   frontend:
     build:
-      context: ./frontend
+      context: ./angular-frontend
       dockerfile: Dockerfile.frontend
     container_name: windows-auth-frontend
     ports:
       - "80:80"
-    depends_on:
-      - backend
     networks:
       - auth-network
+    depends_on:
+      - backend
+
+  # OpenLDAP Server
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: openldap
+    env_file:
+      - ./ldap-test/config/ldap.env
+    ports:
+      - "389:389"
+      - "636:636"
+    volumes:
+      - ./ldap-test/bootstrap:/container/service/slapd/assets/config/bootstrap/ldif/custom
+      - ldap-data:/var/lib/ldap
+      - ldap-config:/etc/ldap/slapd.d
+    networks:
+      - auth-network
+
+  # LDAP Admin UI
+  phpldapadmin:
+    image: osixia/phpldapadmin:0.9.0
+    container_name: phpldapadmin
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: "openldap"
+      PHPLDAPADMIN_HTTPS: "false"
+    ports:
+      - "8081:80"
+    depends_on:
+      - openldap
+    networks:
+      - auth-network
+
+volumes:
+  ldap-data:
+  ldap-config:
 
 networks:
   auth-network:
