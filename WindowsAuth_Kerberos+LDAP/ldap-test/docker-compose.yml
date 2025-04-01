@@ -1,0 +1,40 @@
+services:
+  # OpenLDAP server
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: openldap
+    env_file:
+      - ./config/ldap.env
+    ports:
+      - "389:389"
+      - "636:636"
+    volumes:
+      - ./bootstrap:/container/service/slapd/assets/config/bootstrap/ldif/custom
+      - ldap-data:/var/lib/ldap
+      - ldap-config:/etc/ldap/slapd.d
+    networks:
+      - ldap-network
+    restart: unless-stopped
+
+  # LDAP Admin UI
+  phpldapadmin:
+    image: osixia/phpldapadmin:0.9.0
+    container_name: phpldapadmin
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: "openldap"
+      PHPLDAPADMIN_HTTPS: "false"
+    ports:
+      - "8080:80"
+    depends_on:
+      - openldap
+    networks:
+      - ldap-network
+    restart: unless-stopped
+
+volumes:
+  ldap-data:
+  ldap-config:
+
+networks:
+  ldap-network:
+    driver: bridge

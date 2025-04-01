@@ -1,0 +1,97 @@
+# Base structure
+dn: dc=example,dc=com
+objectClass: dcObject
+objectClass: organization
+dc: example
+o: Example Corp
+description: Root entry for example.com
+
+# Create organizational units
+dn: ou=Users,dc=example,dc=com
+objectClass: organizationalUnit
+ou: Users
+description: Users container
+
+dn: ou=Groups,dc=example,dc=com
+objectClass: organizationalUnit
+ou: Groups
+description: Groups container
+
+# Create a service account for binding
+dn: cn=ServiceAccount,ou=Users,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: ServiceAccount
+sn: Service
+givenName: Account
+uid: serviceaccount
+userPassword: servicepassword
+description: Service account for LDAP binding
+
+# Create a test user (John Doe)
+dn: cn=John Doe,ou=Users,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: John Doe
+sn: Doe
+givenName: John
+uid: jdoe
+# Windows/AD specific attributes
+sAMAccountName: jdoe
+mail: john.doe@example.com
+userPassword: password123
+displayName: John Doe
+description: Test user account
+
+# Create another test user (Jane Smith)
+dn: cn=Jane Smith,ou=Users,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: Jane Smith
+sn: Smith
+givenName: Jane
+uid: jsmith
+# Windows/AD specific attributes
+sAMAccountName: jsmith
+mail: jane.smith@example.com
+userPassword: password123
+displayName: Jane Smith
+description: Test user account
+
+# Create a test user (Admin User)
+dn: cn=Admin User,ou=Users,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: Admin User
+sn: User
+givenName: Admin
+uid: admin
+# Windows/AD specific attributes
+sAMAccountName: admin
+mail: admin@example.com
+userPassword: admin123
+displayName: Admin User
+description: Administrator account
+
+# Create a test group (Developers)
+dn: cn=Developers,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Developers
+description: Developers group
+member: cn=John Doe,ou=Users,dc=example,dc=com
+
+# Create another test group (Administrators)
+dn: cn=Administrators,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Administrators
+description: Administrators group
+member: cn=Admin User,ou=Users,dc=example,dc=com
+member: cn=Jane Smith,ou=Users,dc=example,dc=com
+
+# Create another test group (Users)
+dn: cn=Users,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Users
+description: General users group
+member: cn=John Doe,ou=Users,dc=example,dc=com
+member: cn=Jane Smith,ou=Users,dc=example,dc=com
