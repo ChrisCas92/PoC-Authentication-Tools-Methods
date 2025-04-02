@@ -1,284 +1,253 @@
-# Oauth2OpenIDConnectAngularFrontendJeeBackend
+# OAuth2 + OpenID Connect PoC mit Keycloak und JBoss/WildFly
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.1.
+Dieses Proof of Concept demonstriert die Integration von OAuth2 und OpenID Connect (OIDC) für die Authentifizierung in einer Angular-Frontend + JBoss/WildFly-Backend Architektur mit Keycloak als Identity Provider.
 
-## Development server
+## Besonderheiten dieses PoC
 
-To start a local development server, run:
+- Verwendung von ID-Token (statt Access-Token) für Backend-Authentifizierung
+- Extraktion der Windows-Benutzerkennung über den `winaccountname`-Claim
+- Extraktion der Mandanteninformation aus dem UPN-Claim (z.B. `user@rhl.drv` → Mandant "13")
+- Vorbereitung für AD-FS ohne proprietäre AD-FS-Funktionen
+- JBoss/WildFly-Backend mit Elytron OIDC-Integration
 
-```bash
-ng serve
-```
+## Voraussetzungen
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+- Docker und Docker Compose
+- Node.js und NPM (für lokale Entwicklung)
+- Java 17 und Maven (für lokale Backend-Entwicklung)
+- JBoss/WildFly 26+ (lokale Installation optional)
 
-## Code scaffolding
+## Schnellstart
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
+### Entwicklungsumgebung starten
 
 ```bash
-ng build
+# Mit Hot-Reload für das Frontend
+docker-compose --profile dev up
+
+# Oder nur die Produktionsversion
+docker-compose up
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+### Frontend und Backend separat bauen
 
 ```bash
-ng test
+# Frontend bauen
+npm install
+npm run build
+
+# Backend bauen
+cd jeebackend
+mvn clean package
+
+# Optional: Direktes Deployment auf einen lokalen WildFly-Server
+mvn wildfly:deploy
 ```
 
-## Running end-to-end tests
+## Komponenten
 
-For end-to-end (e2e) testing, run:
+### Frontend (Angular)
+
+- OAuth2/OIDC-Integration mit `angular-oauth2-oidc`
+- Extraktion und Verwendung von Custom Claims aus dem ID-Token
+- Mandanten-Extraktion aus dem UPN
+
+### Backend (JBoss/WildFly mit Elytron OIDC)
+
+- WildFly Elytron OIDC für Token-Validierung
+- Extraktion von Claims aus dem ID-Token
+- Mandanten-Extraktion aus dem UPN-Claim
+- Beispiel-Endpoints mit verschiedenen Berechtigungsstufen
+
+## JBoss/WildFly OIDC-Konfiguration
+
+Die OIDC-Integration in JBoss/WildFly erfolgt über das Elytron-Subsystem:
+
+### 1. Konfiguration in standalone.xml
+
+```xml
+<subsystem xmlns="urn:wildfly:elytron:15.0">
+    <!-- ... -->
+    <http>
+        <!-- OIDC/OAuth2 Identity Provider Konfiguration -->
+        <oidc-client name="keycloak-client"
+                  provider-url="http://keycloak:8080/realms/PoCRealm%20Oauth2OpenIdConnect"
+                  client-id="angular-client"
+                  client-secret="${env.OIDC_CLIENT_SECRET:your-client-secret}"
+                  principal-claim="winaccountname"
+                  token-type="id_token">
+            <!-- ... -->
+        </oidc-client>
+        <!-- ... -->
+    </http>
+    <!-- ... -->
+</subsystem>
+```
+
+### 2. Anwendungssicherheit konfigurieren
+
+```xml
+<subsystem xmlns="urn:jboss:domain:undertow:12.0">
+    <!-- ... -->
+    <application-security-domains>
+        <application-security-domain name="jee-backend" http-authentication-factory="oidc-http-authentication"/>
+    </application-security-domains>
+    <!-- ... -->
+</subsystem>
+```
+
+### 3. Web.xml für die Anwendung
+
+```xml
+<web-app>
+    <!-- ... -->
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>Secured API</web-resource-name>
+            <url-pattern>/api/secured/*</url-pattern>
+            <url-pattern>/api/admin/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>user</role-name>
+            <role-name>admin</role-name>
+        </auth-constraint>
+    </security-constraint>
+    <!-- ... -->
+</web-app>
+```
+
+## Keycloak-Konfiguration
+
+Die detaillierte Anleitung zur Keycloak-Konfiguration finden Sie in der [Keycloak-Konfigurationsanleitung](docs/keycloak-config-guide.md).
+
+Hier die wichtigsten Schritte:
+
+1. Öffnen Sie die Keycloak-Admin-Konsole: http://localhost:8080/admin/ (admin/admin)
+2. Erstellen Sie einen Realm: "PoCRealm Oauth2OpenIdConnect"
+3. Erstellen Sie einen Client: "angular-client"
+4. Konfigurieren Sie folgende Mapper für den Client:
+   - winaccountname (User Attribute → winaccountname)
+   - upn (User Property → username oder email)
+5. Erstellen Sie Testbenutzer mit passenden Attributen
+
+## Projektstruktur
+
+```
+/
+├── src/                           # Angular-Frontend
+│   ├── app/                       # Angular-Komponenten
+│   ├── auth/                      # Auth-Service und Konfiguration
+│   │   ├── auth.config.ts         # OAuth-Konfiguration
+│   │   ├── auth.service.ts        # Auth-Service für Claims
+│   │   └── auth.interceptor.ts    # HTTP-Interceptor für Token
+│   └── ...
+├── jeebackend/                    # JBoss/WildFly-Backend
+│   ├── src/                       # Backend-Quellcode
+│   │   ├── main/java/com/example/ # Java-Klassen
+│   │   │   ├── MandantExtractor.java  # UPN/Mandanten-Verarbeitung
+│   │   │   └── SecuredResource.java   # REST-Endpunkte
+│   │   └── main/webapp/           # Web-Ressourcen
+│   │       └── WEB-INF/           # Webdeskriptoren
+│   │           └── web.xml        # Security-Konfiguration
+│   └── pom.xml                    # Maven-Konfiguration
+├── docker-compose.yml             # Docker-Compose für Produktion
+├── Dockerfile.frontend            # Frontend-Dockerfile
+├── jeebackend/Dockerfile.backend  # Backend-Dockerfile
+└── ...
+```
+
+## AD-FS Integration
+
+Dieses PoC ist so konzipiert, dass es später mit AD-FS (Active Directory Federation Services) als Identity Provider verwendet werden kann. Dafür müssen folgende Anpassungen vorgenommen werden:
+
+### 1. Angular-Konfiguration anpassen
+
+```typescript
+// src/auth/auth.config.ts
+export const authConfig: AuthConfig = {
+  issuer: "https://adfs.example.com/adfs",
+  redirectUri: window.location.origin,
+  clientId: "angular-client",
+  // Weitere Konfiguration...
+};
+```
+
+### 2. JBoss/WildFly-Konfiguration anpassen
+
+```xml
+<oidc-client name="adfs-client"
+           provider-url="https://adfs.example.com/adfs"
+           client-id="angular-client"
+           client-secret="${env.OIDC_CLIENT_SECRET}"
+           principal-claim="winaccountname"
+           token-type="id_token">
+    <!-- ... -->
+</oidc-client>
+```
+
+### 3. AD-FS Konfiguration
+
+- Erstellen Sie eine Relying Party Trust für die Anwendung
+- Konfigurieren Sie die erforderlichen Claims (winaccountname, upn)
+- Stellen Sie sicher, dass der UPN das Format username@domain.drv hat
+- Konfigurieren Sie die OAuth2/OIDC-Endpunkte
+
+## Fehlerbehebung: Häufige Probleme
+
+### Frontend-Aktualisierungen werden nicht übernommen
+
+Siehe [Frontend-Aktualisierung in Docker-Umgebungen](docs/frontend-aktualisierung.md) für detaillierte Anleitungen.
+
+Kurze Lösung:
 
 ```bash
-ng e2e
+# Stoppe Container
+docker-compose down
+
+# Bereinige Cache
+docker system prune -a
+
+# Baue Images neu
+docker-compose build --no-cache
+
+# Starte Container neu
+docker-compose up -d
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+### JBoss/WildFly OIDC-Probleme
 
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
-
-## Docker Problematiken
-
-Das grundlegende Problem verstehen
-Wenn du Änderungen an deinem Frontend-Code vornimmst und diese nicht in der laufenden Anwendung erscheinen, könnte dies an verschiedenen Faktoren liegen:
-
-**Caching-Probleme:** Docker oder der Browser speichert alte Versionen deiner Dateien im Cache.
-**Volumen-Mounts:** Der Container verwendet möglicherweise nicht deine aktuellen Dateien.
-**Build-Prozess-Probleme:** Deine Änderungen werden beim Build-Prozess nicht richtig übernommen.
-
-# Lösungsansätze im Detail
-
-# Frontend-Aktualisierung in Docker-Umgebungen
-
-Diese Anleitung beschreibt, wie Sie Änderungen am Frontend-Code in einer Docker-Umgebung korrekt übernehmen können.
-
-## Das grundlegende Problem
-
-Bei der Verwendung von Docker mit Angular (oder anderen Frontend-Frameworks) kann es vorkommen, dass Änderungen am Quellcode nicht automatisch in der laufenden Anwendung sichtbar werden. Dies liegt hauptsächlich an der Art und Weise, wie Docker Images gebaut und Container ausgeführt werden.
-
-## Lösungsansätze
-
-### Option 1: Vollständiger Rebuild (Produktions-Ansatz)
-
-Dieser Ansatz ist für Produktionsbuilds und finale Tests geeignet:
-
-```bash
-# 1. Angular-Anwendung bauen
-ng build
-
-# 2. Docker-Image neu bauen ohne Cache
-docker-compose build --no-cache frontend
-
-# 3. Container neu starten
-docker-compose up -d frontend
-```
-
-Der Parameter `--no-cache` ist wichtig, da er Docker zwingt, alle Build-Schritte neu auszuführen und keine gecachten Schritte zu verwenden.
-
-### Option 2: Entwicklungsmodus mit Volume-Mounts (empfohlen für aktive Entwicklung)
-
-Für eine effizientere Entwicklung können Sie eine separate Docker-Compose-Konfiguration erstellen, die direktes Mounting des Quellcodes ermöglicht:
-
-1. Erstellen Sie eine `docker-compose.dev.yml` Datei:
-
-```yaml
-services:
-  # ... andere Services (keycloak, backend, etc.) ...
-
-  frontend-dev:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    container_name: angular-frontend-dev
-    volumes:
-      - ./:/app
-      - /app/node_modules
-    ports:
-      - "4200:4200"
-    depends_on:
-      - keycloak
-    networks:
-      - poc-network
-```
-
-2. Starten Sie den Entwicklungsserver:
-
-```bash
-docker-compose -f docker-compose.dev.yml up frontend-dev
-```
-
-Mit dieser Methode werden Änderungen am Code automatisch erkannt und der Browser wird aktualisiert.
-
-## Verbesserte Docker-Konfiguration
-
-### Optimiertes Frontend-Dockerfile (Mehrstufiger Build)
-
-Ersetzen Sie Ihr aktuelles Frontend-Dockerfile durch dieses mehrstufige Dockerfile:
-
-```dockerfile
-# Build-Phase
-FROM node:20-alpine AS build
-WORKDIR /app
-
-# Kopiere package.json und installiere Abhängigkeiten
-COPY package*.json ./
-RUN npm install
-
-# Kopiere den Quellcode und baue die Anwendung
-COPY . .
-RUN npm run build
-
-# Deployment-Phase
-FROM nginx:alpine
-# Kopiere die gebauten Dateien aus der Build-Phase
-COPY --from=build /app/dist/oauth2-open-idconnect-angular-frontend-jee-backend/browser /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
-```
-
-Dieser Ansatz bietet mehrere Vorteile:
-
-- Der Build-Prozess ist in Docker integriert
-- Abhängigkeiten werden im Container installiert
-- Die Konsistenz zwischen Entwicklungs- und Produktionsumgebungen wird verbessert
-
-## Fehlerbehebung: Änderungen werden nicht übernommen
-
-Wenn trotz Neustart des Containers Änderungen nicht übernommen werden:
-
-1. **Vollständiger Neustart:**
+1. **Logs prüfen**:
 
    ```bash
-   # Stoppe alle laufenden Container
-   docker-compose down
-
-   # Entferne alle ungenutzten Ressourcen (optional, `aber hilfreich`)
-   docker system prune -a
-
-   # Baue die Images neu ohne Cache zu verwenden
-   docker-compose build --no-cache
-
-   # Starte die Container neu
-   docker-compose up -d
+   docker logs jboss-backend
    ```
 
-2. **Browser-Cache leeren:**
-   Führen Sie einen Hard-Refresh im Browser durch (`Strg+F5 oder Cmd+Shift+R`).
+2. **Token-Validierungsprobleme**:
 
-3. **Build-Prozess prüfen:**
+   - Stellen Sie sicher, dass der JWKS-Endpunkt erreichbar ist
+   - Überprüfen Sie die Claims im Token
+   - Prüfen Sie die Issuer-URL
 
-   ```bash
-   # Überprüfen Sie die Ausgabe auf Fehler oder Warnungen.
-   ng build --verbose
-   ```
+3. **Rollen-Mapping-Probleme**:
+   - Überprüfen Sie die Rollenzuweisungen in Keycloak
+   - Prüfen Sie die realm_access/roles-Struktur im Token
 
-4. **Container-Logs überprüfen:**
+## Unterstützte Mandanten
 
-   ```bash
-   # Suchen nach Fehlern oder Warnungen, die auf Probleme hindeuten könnten.
-   docker-compose logs -f frontend
-   ```
+Folgende Domänen werden im aktuellen Mapping unterstützt:
 
-5. **Container-Inhalt überprüfen:**
-   ```bash
-   # Stelle sicher, dass die Dateien im Container aktuell sind.
-   docker exec -it angular-frontend sh
-   ls -la /usr/share/nginx/html
-   ```
+| Domain     | Mandanten-ID |
+| ---------- | ------------ |
+| rhl.drv    | 13           |
+| bsh.drv    | 14           |
+| now-it.drv | 15           |
 
-## Bekannte Probleme und Lösungen
+Zum Hinzufügen weiterer Mandanten bearbeiten Sie die `DOMAIN_TO_MANDANT`-Map in `MandantExtractor.java`.
 
-### "ng: not found" beim Starten des Development-Containers
+## Autoren
 
-Wenn beim Starten des Development-Containers der Fehler `sh: ng: not found` auftritt, liegt das daran, dass das Angular CLI nicht im Pfad des Containers verfügbar ist. Dies kann auf verschiedene Weise behoben werden:
+- [Ihr Team/Name]
 
-1. Verwenden Sie `npx` in der `docker-compose.dev.yml`:
+## Lizenz
 
-   ```yaml
-   command: npx ng serve --host 0.0.0.0
-   ```
-
-2. Erstellen Sie ein eigenes Development-Dockerfile, das das Angular CLI global installiert:
-
-   ```dockerfile
-   FROM node:16-alpine
-   RUN npm install -g @angular/cli
-   # ... weitere Konfiguration
-   ```
-
-3 Stellen Sie sicher, dass in Ihrer `package.json` der `start`-Befehl korrekt definiert ist und fügen Sie `--host 0.0.0.0` hinzu, damit der Server von außerhalb des Containers erreichbar ist:
-
-```json
-"scripts": {
-"start": "ng serve --host 0.0.0.0"
-}
-```
-
-## Automatisiertes Build-Skript (optional)
-
-Sie können den Build-Prozess mit einem Skript automatisieren:
-
-### Für Windows (build-frontend.bat):
-
-```batch
-@echo off
-echo Building Angular application...
-call ng build
-echo Building Docker image...
-docker-compose build --no-cache frontend
-echo Restarting container...
-docker-compose up -d frontend
-echo Done!
-```
-
-### Für Linux/Mac (build-frontend.sh):
-
-```bash
-#!/bin/bash
-echo "Building Angular application..."
-ng build
-echo "Building Docker image..."
-docker-compose build --no-cache frontend
-echo "Restarting container..."
-docker-compose up -d frontend
-echo "Done!"
-```
-
-Nutzen Sie das Skript mit:
-
-```bash
-# Windows
-.\build-frontend.bat
-
-# Linux/Mac
-chmod +x build-frontend.sh
-./build-frontend.sh
-```
-
-## Zusammenfassung
-
-1. **Für Produktionsbuilds:** Verwenden Sie den vollständigen Rebuild-Ansatz.
-2. **Für aktive Entwicklung:** Verwenden Sie den Entwicklungsmodus mit Volume-Mounts.
-3. **Für optimale Konfiguration:** Implementieren Sie das mehrstufige Dockerfile.
-4. **Bei Problemen:** Folgen Sie dem Fehlerbehebungsleitfaden.
+[Ihre Lizenzinformationen]

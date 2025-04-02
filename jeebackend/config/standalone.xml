@@ -1,0 +1,53 @@
+<?xml version="1.0" ?>
+<!-- Dieses ist ein Ausschnitt aus der standalone.xml Konfigurationsdatei -->
+<!-- Bitte integrieren Sie dies in Ihre vorhandene Konfigurationsdatei -->
+
+<server xmlns="urn:jboss:domain:17.0">
+  <subsystem xmlns="urn:wildfly:elytron:15.0">
+    <!-- ... bestehende Konfiguration ... -->
+
+    <!-- Elytron OIDC-Konfiguration -->
+    <http>
+      <http-authentication-factory name="oidc-http-authentication" http-server-mechanism-factory="global" security-domain="ApplicationDomain">
+        <mechanism-configuration>
+          <mechanism mechanism-name="BEARER_TOKEN" credential-security-factory="oidc-security-factory"/>
+        </mechanism-configuration>
+      </http-authentication-factory>
+
+      <!-- OIDC/OAuth2 Identity Provider Konfiguration -->
+      <oidc-client name="keycloak-client" provider-url="http://keycloak:8080/realms/PoCRealm%20Oauth2OpenIdConnect" client-id="angular-client" client-secret="${env.OIDC_CLIENT_SECRET:your-client-secret}" principal-claim="winaccountname" token-type="id_token">
+        <provider-metadata>
+          <issuer>http://keycloak:8080/realms/PoCRealm%20Oauth2OpenIdConnect</issuer>
+          <jwks-uri>http://keycloak:8080/realms/PoCRealm%20Oauth2OpenIdConnect/protocol/openid-connect/certs</jwks-uri>
+        </provider-metadata>
+      </oidc-client>
+
+      <security-domain name="oidc-security-domain" default-realm="oidc-realm">
+        <realm name="oidc-realm" principal-transformer="oidc-principal-transformer">
+          <token-realm name="oidc-token-realm" principal-claim="winaccountname" jwt-security-realm="oidc-jwt-realm"/>
+        </realm>
+      </security-domain>
+
+      <principal-transformer name="oidc-principal-transformer" />
+
+      <jwt-security-realm name="oidc-jwt-realm">
+        <oidc-realm truststore="application-truststore" client="keycloak-client"/>
+      </jwt-security-realm>
+
+      <credential-security-factory name="oidc-security-factory" />
+    </http>
+
+    <!-- ... bestehende Konfiguration ... -->
+  </subsystem>
+
+  <!-- Undertow Subsystem für die Anwendung -->
+  <subsystem xmlns="urn:jboss:domain:undertow:12.0">
+    <!-- ... bestehende Konfiguration ... -->
+
+    <application-security-domains>
+      <application-security-domain name="jee-backend" http-authentication-factory="oidc-http-authentication"/>
+    </application-security-domains>
+
+    <!-- ... bestehende Konfiguration ... -->
+  </subsystem>
+</server>
