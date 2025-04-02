@@ -40,3 +40,35 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# any eclipse project file.
+
+.eclipse
+
+.classpath
+
+
+
+## All the folders underneath site folder
+
+**/site
+
+site/
+
+site/*
+
+
+
+## target folder at the top level of the project structue and paths and contents underneath it
+
+target/
+
+target/*
+
+
+
+## target folder at any level of the project structue
+
+**/target
+
+/target
