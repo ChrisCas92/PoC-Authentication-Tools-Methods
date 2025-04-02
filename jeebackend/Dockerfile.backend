@@ -15,7 +15,7 @@ WORKDIR /opt/jboss/wildfly
 RUN /opt/jboss/wildfly/bin/add-user.sh admin Admin#123 --silent
 
 # Copy configuration files if needed
-COPY config/standalone.xml /opt/jboss/wildfly/standalone/configuration/standalone.xml
+COPY src/main/resources/standalone.xml /opt/jboss/wildfly/standalone/configuration/standalone.xml
 
 # Copy the war file from the build stage
 COPY --from=build /app/target/*.war /opt/jboss/wildfly/standalone/deployments/
@@ -25,3 +25,4 @@ EXPOSE 8080 9990
 
 # Start WildFly in standalone mode and bind to all interfaces
 CMD ["/opt/jboss/wildfly/bin/standalone.sh", "-b", "0.0.0.0", "-bmanagement", "0.0.0.0"]
+

@@ -5,41 +5,67 @@ services:
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
+      # Zusätzliche Konfigurationen für Custom-Claims
+      - KC_FEATURES=preview,token-exchange
     command: start-dev
     ports:
       - "8080:8080"
     volumes:
       - keycloak_data:/opt/keycloak/data
+      # Optional: Vorkonfigurierte Realm-Einstellungen importieren
+      # - ./keycloak-config:/opt/keycloak/data
     networks:
       - poc-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # Frontend mit optimiertem Dockerfile
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+      args:
+        - NODE_ENV=production
     container_name: angular-frontend
     ports:
       - "4200:80"
     depends_on:
       - keycloak
+      - jboss-backend
     networks:
       - poc-network
 
-  jee-backend:
+  # JBoss/WildFly-Backend mit OIDC
+  jboss-backend:
     build:
       context: ./jeebackend
       dockerfile: Dockerfile.backend
-    container_name: jee-backend
+    container_name: jboss-backend
     ports:
-      - "9080:9080"
+      - "8081:8080" # Anwendungsport
+      - "9990:9990" # Management-Port
     depends_on:
       - keycloak
     environment:
-      - MP_JWT_VERIFY_PUBLICKEY_LOCATION=http://keycloak:8080/realms/PoCRealm%20Oauth2OpenIdConnect/protocol/openid-connect/certs
-      - MP_JWT_VERIFY_ISSUER=http://keycloak:8080/realms/PoCRealm%20Oauth2OpenIdConnect
-      - MP_JWT_VERIFY_AUDIENCES=angular-client
+      # Umgebungsvariablen für die OIDC-Konfiguration
+      - OIDC_CLIENT_SECRET=your-client-secret
+      - OIDC_ISSUER=http://keycloak:8080/realms/PoCRealm%20Oauth2OpenIdConnect
+      - OIDC_JWKS_URI=http://keycloak:8080/realms/PoCRealm%20Oauth2OpenIdConnect/protocol/openid-connect/certs
+    volumes:
+      # Für schnellere Entwicklung: Direktes Mounting der Deployment-Dateien
+      - ./jeebackend/target/jee-backend-1.0.war:/opt/jboss/wildfly/standalone/deployments/jee-backend-1.0.war
+      # Optional: Mounting der Konfigurationsdateien
+      - ./jeebackend/src/main/resources/standalone.xml:/opt/jboss/wildfly/standalone/configuration/standalone.xml
     networks:
       - poc-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9990/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
   poc-network:

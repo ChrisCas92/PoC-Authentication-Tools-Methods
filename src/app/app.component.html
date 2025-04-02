@@ -1,7 +1,15 @@
 <div>
-  <h1>Minimal PoC: OAuth2 / OIDC mit Keycloak</h1>
+  <h1>Proof of Concept: OAuth2 / OIDC mit Keycloak</h1>
   <p *ngIf="!loggedIn">Du bist nicht eingeloggt.</p>
   <p *ngIf="loggedIn">Du bist eingeloggt!</p>
+
+  <!-- Anzeige der Claims und Mandanten-Information -->
+  <div *ngIf="loggedIn" class="user-info">
+    <h3>Benutzerinformationen:</h3>
+    <p><strong>Windows-Account:</strong> {{ winAccountName$ | async }}</p>
+    <p><strong>UPN:</strong> {{ upn$ | async }}</p>
+    <p><strong>Mandanten-ID:</strong> {{ (mandant$ | async) || 'Nicht verfügbar' }}</p>
+  </div>
 
   <button (click)="login()" *ngIf="!loggedIn">
     Login mit Keycloak

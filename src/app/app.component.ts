@@ -1,81 +1,102 @@
-import { NgIf } from '@angular/common';
+import { NgIf, AsyncPipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { OAuthService } from 'angular-oauth2-oidc';
 import { authConfig } from '../auth/auth.config';
 import { HttpClient } from '@angular/common/http';
+import { AuthService } from '../auth/auth.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [NgIf],
-  templateUrl: './app.component.html'
+  imports: [NgIf, AsyncPipe],
+  templateUrl: './app.component.html',
+  styles: [`
+    .user-info {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+    }
+    .user-info p {
+      margin: 5px 0;
+    }
+  `]
 })
 export class AppComponent implements OnInit {
-  loggedIn = false;
+  // Observables für die Benutzerinformationen
+  winAccountName$: Observable<string | undefined>;
+  upn$: Observable<string | undefined>;
+  mandant$: Observable<string | null>;
 
- // Inject HttpClient in constructor
-constructor(private oauthService: OAuthService, private http: HttpClient) {
-    // Configure and initialize OAuth
+  get loggedIn(): boolean {
+    return this.authService.isAuthenticated();
+  }
+
+  constructor(
+    private oauthService: OAuthService,
+    private http: HttpClient,
+    private authService: AuthService
+  ) {
+    // OAuth konfigurieren
     this.configureOAuth();
+
+    // Observables initialisieren
+    this.winAccountName$ = this.authService.getWinAccountName();
+    this.upn$ = this.authService.getUpn();
+    this.mandant$ = this.authService.mandant$;
   }
 
   async configureOAuth() {
-    // Configure the OAuth service
+    // OAuth Service konfigurieren
     this.oauthService.configure(authConfig);
 
     try {
-      // Load discovery document
+      // Discovery Document laden und Auto-Login versuchen
       await this.oauthService.loadDiscoveryDocumentAndTryLogin();
-
-      // Check if the user is logged in
-      this.loggedIn = this.oauthService.hasValidAccessToken();
-
-      console.log('OAuth configured successfully');
-      console.log('Logged in status:', this.loggedIn);
+      console.log('OAuth konfiguriert');
     } catch (error) {
-      console.error('OAuth configuration error:', error);
+      console.error('OAuth Konfigurationsfehler:', error);
     }
   }
 
   ngOnInit(): void {
-    // Already handled in constructor
+    // Bereits im Konstruktor behandelt
   }
 
   login(): void {
-    console.log('Starting login flow');
-    this.oauthService.initLoginFlow();
+    this.authService.login();
   }
 
   logout(): void {
-    console.log('Logging out');
-    this.oauthService.logOut();
+    this.authService.logout();
   }
 
   testPublicEndpoint() {
     this.http.get('/api/public')
       .subscribe({
         next: (response) => {
-          console.log('Public endpoint response:', response);
-          alert('Public endpoint access successful: ' + JSON.stringify(response));
+          console.log('Public Endpoint Antwort:', response);
+          alert('Public Endpoint Zugriff erfolgreich: ' + JSON.stringify(response));
         },
         error: (error) => {
-          console.error('Error accessing public endpoint:', error);
-          alert('Error accessing public endpoint: ' + error.message);
+          console.error('Fehler beim Zugriff auf Public Endpoint:', error);
+          alert('Fehler beim Zugriff auf Public Endpoint: ' + error.message);
         }
-  });
+      });
   }
 
   testSecuredEndpoint() {
     this.http.get('/api/secured')
       .subscribe({
-      next: (response) => {
-        console.log('Secured endpoint response:', response);
-        alert('Secured endpoint access successful: ' + JSON.stringify(response));
-      },
-      error: (error) => {
-        console.error('Error accessing secured endpoint:', error);
-        alert('Error accessing secured endpoint: ' + error.message);
-      }
+        next: (response) => {
+          console.log('Secured Endpoint Antwort:', response);
+          alert('Secured Endpoint Zugriff erfolgreich: ' + JSON.stringify(response));
+        },
+        error: (error) => {
+          console.error('Fehler beim Zugriff auf Secured Endpoint:', error);
+          alert('Fehler beim Zugriff auf Secured Endpoint: ' + error.message);
+        }
       });
   }
 
@@ -83,12 +104,12 @@ constructor(private oauthService: OAuthService, private http: HttpClient) {
     this.http.get('/api/admin')
       .subscribe({
         next: (response) => {
-          console.log('Admin endpoint response:', response);
-          alert('Admin endpoint access successful: ' + JSON.stringify(response));
+          console.log('Admin Endpoint Antwort:', response);
+          alert('Admin Endpoint Zugriff erfolgreich: ' + JSON.stringify(response));
         },
         error: (error) => {
-          console.error('Error accessing admin endpoint:', error);
-          alert('Error accessing admin endpoint: ' + error.message);
+          console.error('Fehler beim Zugriff auf Admin Endpoint:', error);
+          alert('Fehler beim Zugriff auf Admin Endpoint: ' + error.message);
         }
       });
   }

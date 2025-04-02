@@ -1,3 +1,4 @@
+// src/app/app.config.ts
 import { ApplicationConfig, importProvidersFrom } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideZoneChangeDetection } from '@angular/core';
@@ -7,6 +8,7 @@ import { OAuthModule, provideOAuthClient } from 'angular-oauth2-oidc';
 import { routes } from './app.routes';
 import { authInterceptor } from '../auth/auth.interceptor';
 import { authConfig } from '../auth/auth.config';
+import { environment } from '../environments/environment.prod';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -18,9 +20,14 @@ export const appConfig: ApplicationConfig = {
     ),
     provideOAuthClient({
       resourceServer: {
-        allowedUrls: ['/api'],
-        sendAccessToken: true
+        allowedUrls: [environment.apiUrl],
+        sendAccessToken: !environment.useIdToken,
       }
-    })
+    }),
+    // Bereitstellen der Auth-Konfiguration
+    {
+      provide: authConfig,
+      useValue: authConfig
+    }
   ]
 };
