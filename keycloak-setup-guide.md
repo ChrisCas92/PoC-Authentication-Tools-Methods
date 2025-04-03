@@ -53,51 +53,59 @@ Warten Sie, bis Keycloak vollständig hochgefahren ist (normalerweise 30-60 Seku
 
 1. Navigieren Sie zum Tab "Credentials" des erstellten Clients
 2. Notieren Sie sich das Client Secret (Sie benötigen es später für Ihre Anwendungskonfiguration)
-3. aktuell RDPuvVZwEW0grzhx36F4pDrxMx5yDc32
+3. aktuell: `9Ie6TbfCfkurKsUkq6Yx0zMtUE3J4Flv`
 
 ## 6. Client-Scopes konfigurieren
 
-1. Klicken Sie im linken Menü auf "Client scopes"
-2. Prüfen Sie, ob ein Scope "openid" existiert. Falls nicht:
+### Client-Scopes prüfen und erstellen
 
-   - Klicken Sie auf "Create client scope"
-   - Name: `openid`
-   - Description: `OpenID Connect scope`
-   - Type: `Default`
-   - Protocol: `openid-connect`
-   - Klicken Sie auf "Save"
+- Klicken Sie im linken Menü auf "Client scopes"
+- Prüfen Sie, ob ein Scope "openid" existiert. Falls nicht:
 
-3. Navigieren Sie zu "Clients" → "angular-client" → "Client scopes"
-4. Prüfen Sie im Tab "Assigned default client scopes", ob der Scope "openid" zugewiesen ist
-   Falls nicht, klicken Sie auf "Add client scope" und wählen Sie "openid" aus der Liste und setzen Sie ihn als "Default"
+- Klicken Sie auf "Create client scope"
+  - Name: `openid`
+  - Description: `OpenID Connect scope`
+  - Type: `Default`
+  - Protocol: `openid-connect`
+  - Klicken Sie auf "Save"
 
-5. Navigieren Sie zum Tab "Mappers"
-6. Stellen Sie sicher, dass die Standard-Claims (wie `sub`, `email`, usw.) vorhanden sind
+### Standard-Mapper für den "openid" Scope überprüfen
 
-- Die `Standard-Claims`, die in einem OpenID Connect ID-Token typischerweise enthalten sind, umfassen:
+- Bleiben Sie bei "Client scopes" und klicken Sie auf den "openid" Scope
+- Navigieren Sie zum Tab "Mappers"
+- Stellen Sie sicher, dass die Standard-Claims vorhanden sind:
 
-  - `iss` (Issuer): Der Aussteller des Tokens, in diesem Fall die URL des Keycloak-Servers.
-  - `sub` (Subject): Ein eindeutiger Identifier für den Benutzer.
-  - `aud` (Audience): Für wen der Token bestimmt ist (normalerweise die Client-ID).
-  - `exp` (Expiration Time): Wann der Token abläuft.
-  - `iat` (Issued At): Wann der Token ausgestellt wurde.
-  - `auth_time`: Wann die Authentifizierung stattfand.
-  - `name`: Der vollständige Name des Benutzers.
-  - `given_name`: Der Vorname des Benutzers.
-  - `family_name`: Der Nachname des Benutzers.
-  - `preferred_username`: Der bevorzugte Benutzername.
-  - `email`: Die E-Mail-Adresse des Benutzers.
-  - `email_verified`: Ob die E-Mail-Adresse verifiziert wurde.
+  - `sub` (Subject)
+  - `iss` (Issuer)
+  - `aud` (Audience)
+  - `exp` (Expiration Time)
+  - `iat` (Issued At)
+  - `auth_time`
+  - `name`
+  - `given_name`
+  - `family_name`
+  - `preferred_username`
+  - `email`
+  - `email_verified`
 
-- In Keycloak werden diese `Standard-Claims` normalerweise automatisch dem "openid" Client Scope hinzugefügt. Wenn Sie im Tab "Mappers" des "openid" Client Scopes nachsehen, sollten Sie Mapper für diese Claims sehen.
+### Benutzerdefinierte Mapper hinzufügen (falls erforderlich)
 
-- Für Ihr PoC sind die wichtigsten dieser `Standard-Claims` wahrscheinlich:
+    - `upn`
+    - `winaccountname`
 
-  - `sub`: Als Basis-Identifikator
-  - `preferred_username`: Kann als Fallback-Option verwendet werden, falls andere Claims fehlen
-  - `email`: Kann auch als Basis für den UPN verwendet werden
+- Falls Sie zusätzliche Claims benötigen (wie winaccountname und upn):
 
-Diese Standard-Claims werden ergänzt durch Ihre benutzerdefinierten Claims winaccountname und upn, die Sie speziell für Ihre Anwendung hinzufügen.
+- Klicken Sie bei "Client scopes" → "openid" → "Mappers" auf "Add mapper"
+- Wählen Sie den passenden Mapper-Typ, z.B. "User Attribute"
+- Konfigurieren Sie den Mapper entsprechend
+- Klicken Sie auf "Save"
+
+### Client-Scopes dem Angular-Client zuweisen
+
+- Navigieren Sie zu "Clients" → "angular-client" → "Client scopes"
+
+- Im Tab "Assigned default client scopes" überprüfen Sie, ob der "openid" Scope zugewiesen ist
+- Falls nicht, klicken Sie auf "Add client scope", wählen Sie "openid" aus der Liste und setzen Sie ihn als "Default"
 
 ## 7. Benutzer-Attribut für winaccountname einrichten
 
@@ -300,44 +308,3 @@ Bei CORS-Problemen:
 
 1. Überprüfen Sie die Web Origins-Einstellung im Client
 2. Stellen Sie sicher, dass Ihre Anwendung die korrekten Ports verwendet
-
-## standalone.xml
-
-```<?xml version="1.0" ?>
-<!-- Dieses ist ein Ausschnitt aus der standalone.xml Konfigurationsdatei -->
-<!-- Bitte integrieren Sie dies in Ihre vorhandene Konfigurationsdatei -->
-
-<server xmlns="urn:jboss:domain:17.0">
-  <subsystem xmlns="urn:wildfly:elytron:1.0">
-    <http>
-      <http-authentication-factory name="oidc-http-authentication" http-server-mechanism-factory="global" security-domain="ApplicationDomain">
-        <mechanism-configuration>
-          <mechanism mechanism-name="BEARER_TOKEN" credential-security-factory="oidc-security-factory"/>
-        </mechanism-configuration>
-      </http-authentication-factory>
-
-      <oidc-client name="keycloak-client" provider-url="http://keycloak:8080/realms/PoCRealm%20Oauth2OpenIdConnect" client-id="angular-client" client-secret="${env.OIDC_CLIENT_SECRET:your-client-secret}" principal-claim="winaccountname" token-type="id_token">
-        <provider-metadata>
-          <issuer>http://keycloak:8080/realms/PoCRealm%20Oauth2OpenIdConnect</issuer>
-          <jwks-uri>http://keycloak:8080/realms/PoCRealm%20Oauth2OpenIdConnect/protocol/openid-connect/certs</jwks-uri>
-        </provider-metadata>
-      </oidc-client>
-
-      <security-domain name="oidc-security-domain" default-realm="oidc-realm">
-        <realm name="oidc-realm" principal-transformer="oidc-principal-transformer">
-          <token-realm name="oidc-token-realm" principal-claim="winaccountname" jwt-security-realm="oidc-jwt-realm"/>
-        </realm>
-      </security-domain>
-
-      <principal-transformer name="oidc-principal-transformer" />
-
-      <jwt-security-realm name="oidc-jwt-realm">
-        <oidc-realm truststore="application-truststore" client="keycloak-client"/>
-      </jwt-security-realm>
-
-      <credential-security-factory name="oidc-security-factory" />
-    </http>
-  </subsystem>
-
-</server>
-```

@@ -48,15 +48,18 @@ export class AppComponent implements OnInit {
   }
 
   async configureOAuth() {
-    // OAuth Service konfigurieren
     this.oauthService.configure(authConfig);
 
     try {
-      // Discovery Document laden und Auto-Login versuchen
-      await this.oauthService.loadDiscoveryDocumentAndTryLogin();
-      console.log('OAuth konfiguriert');
+      const result = await this.oauthService.loadDiscoveryDocumentAndTryLogin();
+      console.log('OAuth konfiguriert, Discovery Document geladen:', result);
+      console.log('Discovery document URL:', this.oauthService.discoveryDocumentLoaded);
     } catch (error) {
       console.error('OAuth Konfigurationsfehler:', error);
+      // Details protokollieren
+      if (typeof error === 'object' && error !== null) {
+        console.error('Fehlerdetails:', JSON.stringify(error));
+      }
     }
   }
 

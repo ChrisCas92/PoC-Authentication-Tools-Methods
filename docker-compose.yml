@@ -7,13 +7,14 @@ services:
       - KEYCLOAK_ADMIN_PASSWORD=admin
       # Zusätzliche Konfigurationen für Custom-Claims
       - KC_FEATURES=preview,token-exchange
-    command: start-dev
+    # Starten mit Import-Option, falls eine Export-Datei existiert
+    command: start-dev --import-realm
     ports:
       - "8080:8080"
     volumes:
       - keycloak_data:/opt/keycloak/data
-      # Optional: Vorkonfigurierte Realm-Einstellungen importieren
-      # - ./keycloak-config:/opt/keycloak/data
+      # Verzeichnis für Export/Import
+      - ./keycloak-export:/opt/keycloak/data/import
     networks:
       - poc-network
     healthcheck:
@@ -21,6 +22,9 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    # Shutdown-Hook hinzufügen
+    stop_grace_period: 30s
+    stop_signal: SIGTERM
 
   # Frontend mit optimiertem Dockerfile
   frontend:
@@ -51,7 +55,7 @@ services:
       - keycloak
     environment:
       # Umgebungsvariablen für die OIDC-Konfiguration
-      - OIDC_CLIENT_SECRET=your-client-secret
+      - OIDC_CLIENT_SECRET=9Ie6TbfCfkurKsUkq6Yx0zMtUE3J4Flv
       - OIDC_ISSUER=http://keycloak:8080/realms/PoCRealm%20Oauth2OpenIdConnect
       - OIDC_JWKS_URI=http://keycloak:8080/realms/PoCRealm%20Oauth2OpenIdConnect/protocol/openid-connect/certs
     volumes:

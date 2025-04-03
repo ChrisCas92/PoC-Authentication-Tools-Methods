@@ -1,15 +1,13 @@
 // src/auth/auth.config.ts
 import { AuthConfig } from 'angular-oauth2-oidc';
-import { environment } from '../environments/environment.prod';
 
 export const authConfig: AuthConfig = {
-  issuer: `${environment.keycloakUrl}/realms/${environment.keycloakRealm}`,
-  redirectUri: window.location.origin,
-  clientId: environment.clientId,
+  issuer: ``,
+  clientId: '',
   responseType: 'code',
   scope: 'openid profile email',
-  showDebugInformation: !environment.production,
-  requireHttps: environment.production,
+  showDebugInformation: true,
+  requireHttps: false,
   disableAtHashCheck: true,
   useIdTokenHintForSilentRefresh: true,
   // Das ist die korrekte Eigenschaft, die angibt, ob ID-Tokens angefordert werden
