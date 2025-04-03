@@ -2,8 +2,9 @@
 import { AuthConfig } from 'angular-oauth2-oidc';
 
 export const authConfig: AuthConfig = {
-  issuer: ``,
-  clientId: '',
+  issuer: `http://localhost:8080/realms/PoCRealm%20Oauth2OpenIdConnect`,
+  redirectUri: window.location.origin,
+  clientId: 'angular-client',
   responseType: 'code',
   scope: 'openid profile email',
   showDebugInformation: true,
@@ -18,9 +19,10 @@ export const authConfig: AuthConfig = {
 
 // Interface für die erwarteten Claims im Token
 export interface UserClaims {
-  sub: string;
-  winaccountname?: string;
-  upn?: string;
+  // Standardmäßige OIDC-Claims + winaccountname und upn
+  sub: string; // Eindeutige ID des Benutzers
+  winaccountname?: string;  // Windows-Kontoname des Benutzers falls verfügbar
+  upn?: string; // User Principal Name (UPN) des Benutzers
   email?: string;
   name?: string;
   preferred_username?: string;
@@ -37,9 +39,18 @@ export const domainToMandantMapping: Record<string, string> = {
 // Helfer-Funktion zum Extrahieren der Mandanten-ID aus dem UPN
 export function extractMandantFromUpn(upn: string | undefined): string | null {
   if (!upn || !upn.includes('@')) {
+    console.warn('Ungültiger UPN: ', upn);
     return null;
   }
 
   const domain = upn.split('@')[1];
-  return domainToMandantMapping[domain] || null;
+
+  const mandantId = domainToMandantMapping[domain];
+
+  if (!mandantId) {
+    console.warn(`Keine Mandanten-ID für Domain gefunden: ${domain}`);
+    return null;
+  }
+
+  return mandantId;
 }
