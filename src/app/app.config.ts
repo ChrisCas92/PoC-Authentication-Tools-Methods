@@ -8,7 +8,6 @@ import { OAuthModule, provideOAuthClient } from 'angular-oauth2-oidc';
 import { routes } from './app.routes';
 import { authInterceptor } from '../auth/auth.interceptor';
 import { authConfig } from '../auth/auth.config';
-import { environment } from '../environments/environment.prod';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -20,13 +19,14 @@ export const appConfig: ApplicationConfig = {
     ),
     provideOAuthClient({
       resourceServer: {
-        allowedUrls: [environment.apiUrl],
-        sendAccessToken: !environment.useIdToken,
+        // URL des JBoss/WildFly-Backends im Docker-Netzwerk
+        allowedUrls: ['http://jboss-backend:8081/jee-backend-1.0'],
+        sendAccessToken: true,
       }
     }),
     // Bereitstellen der Auth-Konfiguration
     {
-      provide: authConfig,
+      provide: 'authConfig',
       useValue: authConfig
     }
   ]

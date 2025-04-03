@@ -56,8 +56,8 @@ services:
     environment:
       # Umgebungsvariablen für die OIDC-Konfiguration
       - OIDC_CLIENT_SECRET=9Ie6TbfCfkurKsUkq6Yx0zMtUE3J4Flv
-      - OIDC_ISSUER=http://keycloak:8080/realms/PoCRealm%20Oauth2OpenIdConnect
-      - OIDC_JWKS_URI=http://keycloak:8080/realms/PoCRealm%20Oauth2OpenIdConnect/protocol/openid-connect/certs
+      - OIDC_ISSUER=http://keycloak:8080/realms/PoCRealm-Oauth2OpenIdConnect
+      - OIDC_JWKS_URI=http://keycloak:8080/realms/PoCRealm-Oauth2OpenIdConnect/protocol/openid-connect/certs
     volumes:
       # Für schnellere Entwicklung: Direktes Mounting der Deployment-Dateien
       - ./jeebackend/target/jee-backend-1.0.war:/opt/jboss/wildfly/standalone/deployments/jee-backend-1.0.war

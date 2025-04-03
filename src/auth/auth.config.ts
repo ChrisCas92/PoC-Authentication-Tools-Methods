@@ -2,7 +2,7 @@
 import { AuthConfig } from 'angular-oauth2-oidc';
 
 export const authConfig: AuthConfig = {
-  issuer: `http://localhost:8080/realms/PoCRealm%20Oauth2OpenIdConnect`,
+  issuer: 'http://localhost:8080/realms/PoCRealm-Oauth2OpenIdConnect',
   redirectUri: window.location.origin,
   clientId: 'angular-client',
   responseType: 'code',
@@ -11,6 +11,8 @@ export const authConfig: AuthConfig = {
   requireHttps: false,
   disableAtHashCheck: true,
   useIdTokenHintForSilentRefresh: true,
+  // Client Secret hinzufügen
+  dummyClientSecret: '9Ie6TbfCfkurKsUkq6Yx0zMtUE3J4Flv'
   // Das ist die korrekte Eigenschaft, die angibt, ob ID-Tokens angefordert werden
   // 'requestIdToken' existiert nicht, stattdessen müssen wir responseType anpassen
   // responseType: 'code id_token' würde sowohl Authorization Code als auch ID-Token anfordern
@@ -36,21 +38,31 @@ export const domainToMandantMapping: Record<string, string> = {
   // Weitere Mappings hinzufügen
 };
 
-// Helfer-Funktion zum Extrahieren der Mandanten-ID aus dem UPN
+// In auth.config.ts
 export function extractMandantFromUpn(upn: string | undefined): string | null {
-  if (!upn || !upn.includes('@')) {
-    console.warn('Ungültiger UPN: ', upn);
+  if (!upn) {
+    console.warn('Kein UPN vorhanden');
     return null;
   }
 
-  const domain = upn.split('@')[1];
-
-  const mandantId = domainToMandantMapping[domain];
-
-  if (!mandantId) {
-    console.warn(`Keine Mandanten-ID für Domain gefunden: ${domain}`);
-    return null;
+  // Wenn UPN bereits ein @ enthält, normale Extraktion verwenden
+  if (upn.includes('@')) {
+    const domain = upn.split('@')[1];
+    return domainToMandantMapping[domain] || null;
   }
 
-  return mandantId;
+  // Spezielle Mapping-Logik für einfache Benutzernamen ohne Domain
+  if (upn.startsWith('now')) {
+    // NOW-IT-Benutzer gehören zu Mandant 15
+    return '15';
+  } else if (upn.startsWith('rhl')) {
+    // RHL-Benutzer gehören zu Mandant 13
+    return '13';
+  } else if (upn.startsWith('bsh')) {
+    // BSH-Benutzer gehören zu Mandant 14
+    return '14';
+  }
+
+  console.warn('Konnte Mandanten-ID nicht aus UPN/Username ermitteln:', upn);
+  return null;
 }

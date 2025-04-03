@@ -51,15 +51,19 @@ export class AppComponent implements OnInit {
     this.oauthService.configure(authConfig);
 
     try {
-      const result = await this.oauthService.loadDiscoveryDocumentAndTryLogin();
-      console.log('OAuth konfiguriert, Discovery Document geladen:', result);
-      console.log('Discovery document URL:', this.oauthService.discoveryDocumentLoaded);
+      // Nur Discovery Document laden
+      await this.oauthService.loadDiscoveryDocument();
+      console.log('Discovery Document geladen');
+
+      // Optional: URL-Parameter prüfen, ob wir in einem Auth-Callback sind
+      // Dies hilft, wenn der Benutzer nach der Authentifizierung zurückgeleitet wird
+      const hasCodeParam = window.location.search.includes('code=');
+      if (hasCodeParam) {
+        console.log('Authorization Code gefunden, verarbeite Login...');
+        await this.oauthService.tryLogin();
+      }
     } catch (error) {
       console.error('OAuth Konfigurationsfehler:', error);
-      // Details protokollieren
-      if (typeof error === 'object' && error !== null) {
-        console.error('Fehlerdetails:', JSON.stringify(error));
-      }
     }
   }
 
