@@ -226,6 +226,8 @@
         <provider>keycloak</provider>
         <client-id>angular-client</client-id>
         <credential name="secret" secret="${env.OIDC_CLIENT_SECRET:your-client-secret}" />
+        <principal-claim>winaccountname</principal-claim>
+        <token-type>id_token</token-type>
       </secure-deployment>
     </subsystem>
     <subsystem xmlns="urn:wildfly:elytron:15.1" final-providers="combined-providers" disallowed-providers="OracleUcrypto">

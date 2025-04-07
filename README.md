@@ -251,3 +251,12 @@ Zum Hinzufügen weiterer Mandanten bearbeiten Sie die `DOMAIN_TO_MANDANT`-Map in
 ## Lizenz
 
 [Ihre Lizenzinformationen]
+
+## To-Do
+
+- [ ] Vollständige Dokumentation der Keycloak-Konfiguration
+- [ ] Vollständige Dokumentation der JBoss/WildFly-Konfiguration
+- [ ] Vollständige Dokumentation der Frontend-Integration
+- Implentierung das man nicht direkt eingeloggt ist ( es ist immer eine neue Anmeldung nötig ), zumindest wenn der Container neu gestartet wird.
+- Test Secured Endpoint muss noch gefixxt werden
+- Test Admin Endpoint muss noch gefixxt werden

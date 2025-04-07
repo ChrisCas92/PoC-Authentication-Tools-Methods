@@ -12,11 +12,15 @@ export const authConfig: AuthConfig = {
   disableAtHashCheck: true,
   useIdTokenHintForSilentRefresh: true,
   // Client Secret hinzufügen
-  dummyClientSecret: '9Ie6TbfCfkurKsUkq6Yx0zMtUE3J4Flv'
-  // Das ist die korrekte Eigenschaft, die angibt, ob ID-Tokens angefordert werden
-  // 'requestIdToken' existiert nicht, stattdessen müssen wir responseType anpassen
-  // responseType: 'code id_token' würde sowohl Authorization Code als auch ID-Token anfordern
-  // Aber wir verwenden hier 'code', und das ID-Token wird beim Token-Austausch angefordert
+  dummyClientSecret: '9Ie6TbfCfkurKsUkq6Yx0zMtUE3J4Flv',
+ // PKCE-Flow verwenden für zusätzliche Sicherheit
+  // useSilentRefresh: true, // Optional: für Silent Refresh
+  // silentRefreshRedirectUri: window.location.origin + '/silent-refresh.html',
+  // silentRefreshTimeout: 5000, // Optional: Timeout für Silent Refresh
+  // useHttpBasicAuth: true, // Optional: HTTP Basic Auth verwenden
+
+  // Code Challenge Methode für PKCE
+  // codeChallengeMethod: 'S256', // SHA-256 für PKCE
 };
 
 // Interface für die erwarteten Claims im Token
@@ -55,10 +59,10 @@ export function extractMandantFromUpn(upn: string | undefined): string | null {
   if (upn.startsWith('now')) {
     // NOW-IT-Benutzer gehören zu Mandant 15
     return '15';
-  } else if (upn.startsWith('rhl')) {
+  } else if (upn.startsWith('rh')) {
     // RHL-Benutzer gehören zu Mandant 13
     return '13';
-  } else if (upn.startsWith('bsh')) {
+  } else if (upn.startsWith('bh')) {
     // BSH-Benutzer gehören zu Mandant 14
     return '14';
   }
