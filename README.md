@@ -13,7 +13,7 @@ Dieses Proof of Concept demonstriert die Integration von OAuth2 und OpenID Conne
 ## Voraussetzungen
 
 - Docker und Docker Compose
-- Node.js und NPM (für lokale Entwicklung)
+- Node.js und NPM (für lokale Angular-Entwicklung)
 - Java 17 und Maven (für lokale Backend-Entwicklung)
 - JBoss/WildFly 26+ (lokale Installation optional)
 
